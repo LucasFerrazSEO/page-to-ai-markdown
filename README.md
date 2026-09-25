@@ -1,119 +1,151 @@
-# page-to-ai-markdown — ferramenta grátis e de código aberto para ver o que a IA lê da sua página
+**English** · [Português (Brasil)](README.pt-BR.md)
 
-`page-to-ai-markdown` é uma ferramenta gratuita, de código aberto, que
-busca uma URL, remove menu, rodapé, formulário e outros elementos de
-interface, e mostra o que sobra em markdown limpo. É uma aproximação do
-que um crawler de busca com IA (GPTBot, ClaudeBot, PerplexityBot,
-OAI-SearchBot e afins) tem para ler quando o HTML inicial já vem
-renderizado no servidor — sem execução de JavaScript.
+# page-to-ai-markdown
 
-## O problema que ela resolve
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) ![Python 3](https://img.shields.io/badge/python-3-blue.svg)
 
-Muita página moderna (SPA, site montado em Lovable, Framer ou React sem
-server-side rendering) parece completa no navegador, mas entrega ao
-crawler um HTML quase vazio, porque o conteúdo só aparece depois que o
-JavaScript roda. Um crawler de IA que não executa JavaScript vê a casca
-vazia, não o site que você vê. `page-to-ai-markdown` reproduz exatamente
-essa leitura: busca o HTML cru, tira só o ruído de interface, e mostra o
-que sobra de verdade.
+`page-to-ai-markdown` is a free, open source command-line tool that fetches
+a URL, strips the menu, footer, forms and other interface elements, and
+shows what is left as clean markdown. It approximates what an AI search
+crawler (GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot and similar) has
+to read when the initial HTML is already rendered on the server, with no
+JavaScript execution. The page is fetched with a single GET request and
+processed locally.
 
-## Como funciona
+## Contents
 
-A ferramenta busca a URL, remove `script`, `style`, `nav`, `header`,
-`footer`, `form` e `aside`, além de blocos comuns de ruído (menu, aviso de
-cookie, barra lateral, compartilhamento social, depoimento), e converte o
-que sobra em markdown. De propósito, **não executa JavaScript** — é o
-ponto da ferramenta, não uma falha dela.
+- [Background](#background)
+- [How it works](#how-it-works)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+- [FAQ](#faq)
+- [Limitations](#limitations)
+- [Methodology](#methodology)
+- [Contributing](#contributing)
+- [Author](#author)
+- [License](#license)
 
-## Instalação
+## Background
+
+Many modern pages (SPAs, sites built with Lovable, Framer or React without
+server-side rendering) look complete in the browser but deliver an almost
+empty HTML to the crawler, because the content only appears after
+JavaScript runs. An AI crawler that does not execute JavaScript sees the
+empty shell, not the site you see. `page-to-ai-markdown` reads the page
+the same way: it fetches the raw HTML, removes only the interface noise,
+and shows what is really left.
+
+## How it works
+
+The tool fetches the URL, removes `script`, `style`, `nav`, `header`,
+`footer`, `form` and `aside`, plus common noise blocks (menu, cookie
+notice, sidebar, social sharing, testimonials), and converts the rest to
+markdown. It **does not execute JavaScript** on purpose. That is the point
+of the tool, not a flaw.
+
+## Requirements
+
+- Python 3
+- The packages listed in `requirements.txt`:
+  - `requests>=2.31`
+  - `beautifulsoup4>=4.12`
+  - `markdownify>=0.13`
+  - `lxml>=5.0`
+
+## Installation
 
 ```bash
-git clone https://github.com/lucasferrazseo/page-to-ai-markdown.git
+git clone https://github.com/LucasFerrazSEO/page-to-ai-markdown.git
 cd page-to-ai-markdown
 pip install -r requirements.txt
 ```
 
-Dependências: `requests`, `beautifulsoup4`, `markdownify`, `lxml`.
+## Usage
 
-## Como usar, passo a passo
+The tool prints its messages and writes the frontmatter keys in Brazilian
+Portuguese.
 
-**1. Aponte para a URL que você quer testar.**
+**1. Point it at the URL you want to test.**
 
 ```bash
 python page_to_ai_markdown.py https://exemplo.com/pagina/
 ```
 
-Por padrão, a ferramenta salva um arquivo `.md` com o nome derivado da
-URL, no diretório atual, com frontmatter (URL, título, meta description,
-data da consulta, contagem de palavras).
+By default, the tool saves a `.md` file named after the URL in the current
+directory, with frontmatter (URL, title, meta description, fetch date,
+word count).
 
-**2. Ou peça para imprimir direto no terminal**, sem salvar arquivo:
+**2. Or print straight to the terminal**, without saving a file:
 
 ```bash
 python page_to_ai_markdown.py https://exemplo.com/pagina/ --stdout
 ```
 
-**3. Leia a contagem de palavras restantes.** Se um artigo de 1.200
-palavras vira 40 palavras depois da limpeza, é sinal forte de que o
-conteúdo real depende de JavaScript e um crawler sem execução de JS não
-está vendo quase nada:
+**3. Read the remaining word count.** If a 1,200-word article turns into
+40 words after cleanup, that is a strong sign the real content depends on
+JavaScript and a crawler that does not run JS sees almost nothing:
 
 ```
 pagina.md | Título da Página | 38 palavras restantes
 ```
 
-**4. Escolha o nome e o local do arquivo de saída**, se quiser:
+**4. Choose the output file name and location**, if you want:
 
 ```bash
 python page_to_ai_markdown.py https://exemplo.com/pagina/ --out diagnostico.md
 ```
 
-**5. Use `--cache-bust`** em sites atrás de cache agressivo (LiteSpeed,
-Cloudflare), que serviriam HTML antigo para a URL exata sem esse
-parâmetro:
+**5. Use `--cache-bust`** on sites behind aggressive caching (LiteSpeed,
+Cloudflare) that would serve old HTML for the exact URL without this
+parameter. It appends `?v=<timestamp>` to the URL before fetching:
 
 ```bash
 python page_to_ai_markdown.py https://exemplo.com/pagina/ --cache-bust
 ```
 
-## Perguntas frequentes
+## FAQ
 
-**page-to-ai-markdown é realmente grátis?**
-Sim, código aberto sob licença MIT.
+**Is page-to-ai-markdown really free?**
+Yes. It is open source under the MIT license.
 
-**Isso substitui o "Fetch como Google" do Search Console?**
-Não faz o mesmo trabalho — o Fetch do Search Console usa o renderizador
-completo do Google (com JavaScript). `page-to-ai-markdown` mostra
-deliberadamente a versão SEM JavaScript, porque é essa a limitação que
-muitos crawlers de IA ainda têm. Os dois diagnósticos se complementam.
+**Does this replace "Fetch as Google" in Search Console?**
+It does not do the same job. The Search Console fetch uses Google's full
+renderer (with JavaScript). `page-to-ai-markdown` deliberately shows the
+version WITHOUT JavaScript, because that is the limitation many AI
+crawlers still have. The two diagnostics complement each other.
 
-**Funciona com qualquer site?**
-Funciona com qualquer URL pública acessível por HTTP. Site atrás de login
-ou bloqueio de bot não vai responder à requisição.
+**Does it work with any site?**
+It works with any public URL reachable over HTTP. A site behind a login or
+bot blocking will not respond to the request.
 
-**A ferramenta modifica o site testado?**
-Não. Só faz uma requisição GET, como qualquer visitante, e processa a
-resposta localmente.
+**Does the tool change the tested site?**
+No. It only makes one GET request, like any visitor, and processes the
+response locally.
 
-## Limitações
+## Limitations
 
-HTML puro, sem execução de JavaScript — de propósito. Remoção de ruído é
-heurística baseada em classes e ids comuns de interface; página fora do
-padrão pode sobrar lixo residual ou cortar conteúdo real por engano. Trate
-o resultado como diagnóstico, não como cópia fiel do conteúdo editorial.
+Plain HTML, no JavaScript execution, on purpose. Noise removal is a
+heuristic based on common interface classes and ids. On a page that does
+not follow common patterns, some residual clutter may remain or real
+content may be cut by mistake. Treat the result as a diagnostic, not as a
+faithful copy of the editorial content.
 
-## Método e origem
+## Methodology
 
-Generalização de um script de consulta usado internamente em
-[lucasferrazseo.com](https://lucasferrazseo.com) para poupar tokens ao ler
-páginas em sessões de IA. Aqui, sem nenhuma regra específica de site: os
-padrões de ruído removidos são genéricos de interface web.
+A generalization of a lookup script used internally at
+[lucasferrazseo.com](https://lucasferrazseo.com) to save tokens when
+reading pages in AI sessions. Here it has no site-specific rules: the
+noise patterns it removes are generic web interface patterns.
 
-## Autor
+## Contributing
 
-[Lucas Ferraz](https://lucasferraz.com) — especialista em SEO, criação de
-sites e SEO para IA, fundador da [Lucas Ferraz SEO](https://lucasferrazseo.com).
+Bug reports and suggestions are welcome through [GitHub Issues](https://github.com/LucasFerrazSEO/page-to-ai-markdown/issues).
 
-## Licença
+## Author
 
-MIT — ver [LICENSE](LICENSE).
+[Lucas Ferraz](https://lucasferraz.com) is an SEO, website development and Generative Engine Optimization specialist and the founder of [Lucas Ferraz SEO](https://lucasferrazseo.com).
+
+## License
+
+MIT. See [LICENSE](LICENSE).
